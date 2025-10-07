@@ -1,0 +1,291 @@
+Zadanie1
+
+CREATE TABLE regions (
+    region_id      NUMBER PRIMARY KEY,
+    region_name    VARCHAR2(50)
+);
+
+
+CREATE TABLE countries (
+    country_id     NUMBER PRIMARY KEY,
+    country_name   VARCHAR2(50),
+    region_id      NUMBER
+);
+
+
+CREATE TABLE locations (
+    location_id    NUMBER PRIMARY KEY,
+    street_address VARCHAR2(100),
+    postal_code    VARCHAR2(20),
+    city           VARCHAR2(50),
+    state_province VARCHAR2(50),
+    country_id     NUMBER
+);
+
+
+CREATE TABLE departments (
+    department_id   NUMBER PRIMARY KEY,
+    department_name VARCHAR2(50) NOT NULL,
+    manager_id      NUMBER,
+    location_id     NUMBER
+);
+
+
+CREATE TABLE jobs (
+    job_id      NUMBER PRIMARY KEY,
+    job_title   VARCHAR2(50) NOT NULL,
+    min_salary  NUMBER,
+    max_salary  NUMBER,
+    CONSTRAINT chk_salary CHECK (max_salary - min_salary >= 2000)
+);
+
+
+CREATE TABLE employees (
+    employee_id    NUMBER PRIMARY KEY,
+    first_name     VARCHAR2(50),
+    last_name      VARCHAR2(50) NOT NULL,
+    email          VARCHAR2(50) UNIQUE,
+    phone_number   VARCHAR2(20),
+    hire_date      DATE,
+    job_id         NUMBER,
+    salary         NUMBER,
+    commission_pct NUMBER,
+    manager_id     NUMBER,
+    department_id  NUMBER
+);
+
+
+CREATE TABLE job_history (
+    employee_id   NUMBER,
+    start_date    DATE,
+    end_date      DATE,
+    job_id        NUMBER,
+    department_id NUMBER,
+    PRIMARY KEY (employee_id, start_date)
+);
+
+
+--KLUCZE OBC
+-- COUNTRIES → REGIONS
+ALTER TABLE countries
+ADD CONSTRAINT countries_region_fk
+FOREIGN KEY (region_id)
+REFERENCES regions(region_id);
+
+-- LOCATIONS → COUNTRIES
+ALTER TABLE locations
+ADD CONSTRAINT locations_country_fk
+FOREIGN KEY (country_id)
+REFERENCES countries(country_id);
+
+-- DEPARTMENTS → LOCATIONS
+ALTER TABLE departments
+ADD CONSTRAINT departments_location_fk
+FOREIGN KEY (location_id)
+REFERENCES locations(location_id);
+
+-- DEPARTMENTS → EMPLOYEES (manager_id)
+ALTER TABLE departments
+ADD CONSTRAINT departments_manager_fk
+FOREIGN KEY (manager_id)
+REFERENCES employees(employee_id);
+
+-- EMPLOYEES → JOBS
+ALTER TABLE employees
+ADD CONSTRAINT employees_job_fk
+FOREIGN KEY (job_id)
+REFERENCES jobs(job_id);
+
+-- EMPLOYEES → DEPARTMENTS
+ALTER TABLE employees
+ADD CONSTRAINT employees_dept_fk
+FOREIGN KEY (department_id)
+REFERENCES departments(department_id);
+
+-- EMPLOYEES → EMPLOYEES (manager)
+ALTER TABLE employees
+ADD CONSTRAINT employees_mgr_fk
+FOREIGN KEY (manager_id)
+REFERENCES employees(employee_id);
+
+-- JOB_HISTORY → EMPLOYEES
+ALTER TABLE job_history
+ADD CONSTRAINT job_history_emp_fk
+FOREIGN KEY (employee_id)
+REFERENCES employees(employee_id);
+
+-- JOB_HISTORY → JOBS
+ALTER TABLE job_history
+ADD CONSTRAINT job_history_job_fk
+FOREIGN KEY (job_id)
+REFERENCES jobs(job_id);
+
+-- JOB_HISTORY → DEPARTMENTS
+ALTER TABLE job_history
+ADD CONSTRAINT job_history_dept_fk
+FOREIGN KEY (department_id)
+REFERENCES departments(department_id);
+
+Zadanie 2
+
+INSERT INTO jobs (job_id, job_title, min_salary, max_salary)
+VALUES (1, 'Programista', 4000, 7000);
+
+INSERT INTO jobs (job_id, job_title, min_salary, max_salary)
+VALUES (2, 'Sprzedawca', 3000, 6000);
+
+INSERT INTO jobs (job_id, job_title, min_salary, max_salary)
+VALUES (3, 'Analityk Biznesowy', 5000, 8000);
+
+INSERT INTO jobs (job_id, job_title, min_salary, max_salary)
+VALUES (4, 'Kierownik', 8000, 11000);
+
+
+zadanie 3
+
+INSERT INTO employees (
+    employee_id, 
+    first_name, 
+    last_name, 
+    email, 
+    phone_number, 
+    hire_date, 
+    job_id, 
+    salary, 
+    commission_pct, 
+    manager_id, 
+    department_id
+)
+VALUES (
+    1, 'Anna', 'Kowalska', 'AKOW', '600111222', 
+    TO_DATE('2024-01-15', 'YYYY-MM-DD'), 
+    1, 4500, NULL, NULL, 10
+);
+
+INSERT INTO employees (
+    employee_id, 
+    first_name, 
+    last_name, 
+    email, 
+    phone_number, 
+    hire_date, 
+    job_id, 
+    salary, 
+    commission_pct, 
+    manager_id, 
+    department_id
+)
+VALUES (
+    2, 'Piotr', 'Nowak', 'PNOW', '600222333', 
+    TO_DATE('2024-02-01', 'YYYY-MM-DD'), 
+    2, 3800, NULL, 1, 20
+);
+
+INSERT INTO employees (
+    employee_id, 
+    first_name, 
+    last_name, 
+    email, 
+    phone_number, 
+    hire_date, 
+    job_id, 
+    salary, 
+    commission_pct, 
+    manager_id, 
+    department_id
+)
+VALUES (
+    3, 'Ewa', 'Wiśniewska', 'EWIS', '600333444', 
+    TO_DATE('2024-03-10', 'YYYY-MM-DD'), 
+    3, 5200, 0.05, 1, 30
+);
+
+INSERT INTO employees (
+    employee_id, 
+    first_name, 
+    last_name, 
+    email, 
+    phone_number, 
+    hire_date, 
+    job_id, 
+    salary, 
+    commission_pct, 
+    manager_id, 
+    department_id
+)
+VALUES (
+    4, 'Marek', 'Zieliński', 'MZIE', '600444555', 
+    TO_DATE('2024-04-05', 'YYYY-MM-DD'), 
+    4, 3000, NULL, 1, 40
+);
+
+
+SELECT * FROM employees;
+
+
+SELECT e.employee_id, e.first_name, e.department_id, d.department_name
+FROM employees e
+JOIN departments d ON e.department_id = d.department_id;
+
+
+SELECT constraint_name, constraint_type, status
+FROM user_constraints
+WHERE table_name = 'EMPLOYEES';
+
+
+zadanie 4
+
+UPDATE employees
+SET manager_id = 1
+WHERE employee_id IN (2, 3);
+
+COMMIT;
+
+SELECT employee_id, first_name, last_name, manager_id
+FROM employees
+WHERE employee_id IN (2, 3);
+
+SELECT job_id, job_title, min_salary, max_salary
+FROM jobs;
+
+-- ZADANIE 5
+
+UPDATE jobs
+SET min_salary = min_salary + 500,
+    max_salary = max_salary + 500
+WHERE LOWER(job_title) LIKE '%b%' OR LOWER(job_title) LIKE '%s%';
+
+COMMIT;
+
+SELECT job_id, job_title, min_salary, max_salary
+FROM jobs;
+
+--zadanie 6
+
+SELECT employee_id, first_name, last_name, job_id
+FROM employees
+WHERE job_id = 4;
+
+
+UPDATE employees
+SET job_id = 1
+WHERE job_id = 4;
+
+DELETE FROM jobs
+WHERE max_salary > 9000;
+
+
+COMMIT;
+
+SELECT * FROM jobs;
+
+Zadanie 7
+
+DROP TABLE test;
+
+SHOW RECYCLEBIN;
+
+FLASHBACK TABLE test TO BEFORE DROP;
+
+SELECT * FROM test;
+
