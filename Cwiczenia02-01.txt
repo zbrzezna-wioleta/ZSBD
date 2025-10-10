@@ -1,0 +1,135 @@
+I. Usuń wszystkie tabele ze swojej bazy
+
+
+SELECT table_name FROM user_tables ORDER BY table_name;
+
+
+BEGIN
+  FOR r IN (SELECT table_name FROM user_tables) LOOP
+    EXECUTE IMMEDIATE 'DROP TABLE "' || r.table_name || '" CASCADE CONSTRAINTS';
+  END LOOP;
+END;
+/
+SELECT COUNT(*) AS ile_tabel FROM user_tables;
+
+
+II. Przekopiuj wszystkie tabele wraz z danymi od użytkownika HR.
+Poustawiaj klucze główne i obce
+
+
+SELECT COUNT(*) FROM hr.employees;
+
+CREATE TABLE employees AS SELECT * FROM hr.employees;
+CREATE TABLE departments AS SELECT * FROM hr.departments;
+CREATE TABLE locations AS SELECT * FROM hr.locations;
+CREATE TABLE jobs AS SELECT * FROM hr.jobs;
+CREATE TABLE countries AS SELECT * FROM hr.countries;
+CREATE TABLE regions AS SELECT * FROM hr.regions;
+CREATE TABLE job_grades AS SELECT * FROM hr.job_grades;
+CREATE TABLE job_history AS SELECT * FROM hr.job_history;
+CREATE TABLE products AS SELECT * FROM hr.products;
+CREATE TABLE sales AS SELECT * FROM hr.sales;
+
+SELECT table_name FROM user_tables ORDER BY table_name;
+
+ALTER TABLE regions 
+ADD CONSTRAINT regions_pk PRIMARY KEY (region_id);
+
+ALTER TABLE countries 
+ADD CONSTRAINT countries_pk PRIMARY KEY (country_id);
+
+ALTER TABLE locations 
+ADD CONSTRAINT locations_pk PRIMARY KEY (location_id);
+
+ALTER TABLE departments 
+ADD CONSTRAINT departments_pk PRIMARY KEY (department_id);
+
+ALTER TABLE jobs 
+ADD CONSTRAINT jobs_pk PRIMARY KEY (job_id);
+
+ALTER TABLE employees 
+ADD CONSTRAINT employees_pk PRIMARY KEY (employee_id);
+
+ALTER TABLE job_history 
+ADD CONSTRAINT job_history_pk PRIMARY KEY (employee_id, start_date);
+
+ALTER TABLE job_grades 
+ADD CONSTRAINT job_grades_pk PRIMARY KEY (grade_level);
+
+ALTER TABLE products 
+ADD CONSTRAINT products_pk PRIMARY KEY (product_id);
+
+ALTER TABLE sales 
+ADD CONSTRAINT sales_pk PRIMARY KEY (sale_id);
+
+ALTER TABLE countries 
+ADD CONSTRAINT countries_region_fk 
+FOREIGN KEY (region_id) REFERENCES regions(region_id);
+
+ALTER TABLE locations 
+ADD CONSTRAINT locations_country_fk 
+FOREIGN KEY (country_id) REFERENCES countries(country_id);
+
+ALTER TABLE departments 
+ADD CONSTRAINT departments_location_fk 
+FOREIGN KEY (location_id) REFERENCES locations(location_id);
+
+ALTER TABLE departments 
+ADD CONSTRAINT departments_mgr_fk 
+FOREIGN KEY (manager_id) REFERENCES employees(employee_id);
+
+ALTER TABLE employees 
+ADD CONSTRAINT employees_dept_fk 
+FOREIGN KEY (department_id) REFERENCES departments(department_id);
+
+ALTER TABLE employees 
+ADD CONSTRAINT employees_job_fk 
+FOREIGN KEY (job_id) REFERENCES jobs(job_id);
+
+ALTER TABLE employees 
+ADD CONSTRAINT employees_mgr_fk 
+FOREIGN KEY (manager_id) REFERENCES employees(employee_id);
+
+ALTER TABLE job_history 
+ADD CONSTRAINT job_history_emp_fk 
+FOREIGN KEY (employee_id) REFERENCES employees(employee_id);
+
+ALTER TABLE job_history 
+ADD CONSTRAINT job_history_job_fk 
+FOREIGN KEY (job_id) REFERENCES jobs(job_id);
+
+ALTER TABLE job_history 
+ADD CONSTRAINT job_history_dept_fk 
+FOREIGN KEY (department_id) REFERENCES departments(department_id);
+
+ALTER TABLE sales 
+ADD CONSTRAINT sales_emp_fk 
+FOREIGN KEY (employee_id) REFERENCES employees(employee_id);
+
+ALTER TABLE sales 
+ADD CONSTRAINT sales_product_fk 
+FOREIGN KEY (product_id) REFERENCES products(product_id);
+
+SELECT constraint_name, constraint_type, table_name 
+FROM user_constraints 
+ORDER BY table_name;
+
+SELECT constraint_name, table_name, r_constraint_name
+FROM user_constraints
+WHERE constraint_type = 'R';
+
+SELECT table_name FROM user_tables ORDER BY table_name;
+
+SELECT table_name 
+FROM user_tables 
+ORDER BY table_name;
+
+SELECT table_name, constraint_name
+FROM user_constraints
+WHERE constraint_type = 'P'
+ORDER BY table_name;
+
+SELECT table_name, constraint_name, r_constraint_name
+FROM user_constraints
+WHERE constraint_type = 'R'
+ORDER BY table_name;
