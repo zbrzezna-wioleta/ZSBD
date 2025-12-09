@@ -1,0 +1,214 @@
+--Zadanie 1--
+
+CREATE OR REPLACE FUNCTION f_get_job_title (
+    p_job_id IN jobs.job_id%TYPE
+) RETURN VARCHAR2
+AS
+    v_title jobs.job_title%TYPE;
+BEGIN
+    SELECT job_title
+    INTO v_title
+    FROM jobs
+    WHERE job_id = p_job_id;
+
+    RETURN v_title;
+
+EXCEPTION
+    WHEN NO_DATA_FOUND THEN
+        RAISE_APPLICATION_ERROR(-20050,
+            'Stanowisko o ID ' || p_job_id || ' nie istnieje.');
+END;
+/
+
+SELECT f_get_job_title('IT_PROG') FROM dual;
+
+SELECT f_get_job_title('XYZ') FROM dual;
+
+--Zadanie 2--
+
+CREATE OR REPLACE FUNCTION f_yearly_salary (
+    p_emp_id IN employees.employee_id%TYPE
+) RETURN NUMBER
+AS
+    v_salary employees.salary%TYPE;
+    v_comm   employees.commission_pct%TYPE;
+    v_yearly NUMBER;
+BEGIN
+    SELECT salary, NVL(commission_pct, 0)
+    INTO v_salary, v_comm
+    FROM employees
+    WHERE employee_id = p_emp_id;
+
+    v_yearly := v_salary * 12 + (v_salary * v_comm);
+
+    RETURN v_yearly;
+
+EXCEPTION
+    WHEN NO_DATA_FOUND THEN
+        RAISE_APPLICATION_ERROR(-20060,
+            'Pracownik o ID ' || p_emp_id || ' nie istnieje.');
+END;
+/
+
+SELECT f_yearly_salary(100) FROM dual;
+SELECT f_yearly_salary(9999) FROM dual;
+
+
+--Zadanie 3--
+
+CREATE OR REPLACE FUNCTION f_area_code (
+    p_phone IN VARCHAR2
+) RETURN VARCHAR2
+AS
+    v_code VARCHAR2(50);
+BEGIN
+    -- przypadek (XXX)
+    IF p_phone LIKE '(%' THEN
+        v_code := SUBSTR(p_phone, 2, INSTR(p_phone, ')') - 2);
+
+    -- przypadek XXX...
+    ELSE
+        v_code := SUBSTR(p_phone, 1, 3);
+    END IF;
+
+    RETURN v_code;
+END;
+/
+
+SELECT f_area_code('(515)1234567') FROM dual;
+SELECT f_area_code('515.555.1234') FROM dual;
+SELECT phone_number, f_area_code(phone_number)
+FROM employees;
+
+
+--Zadanie 4--
+
+CREATE OR REPLACE FUNCTION f_first_last_upper (
+    p_text IN VARCHAR2
+) RETURN VARCHAR2
+AS
+    v_result VARCHAR2(2000);
+BEGIN
+    IF p_text IS NULL OR LENGTH(p_text) < 2 THEN
+        RETURN p_text; -- dla 1 litery zwracamy to samo
+    END IF;
+
+    v_result :=
+            UPPER(SUBSTR(p_text, 1, 1)) ||
+            LOWER(SUBSTR(p_text, 2, LENGTH(p_text) - 2)) ||
+            UPPER(SUBSTR(p_text, -1));
+
+    RETURN v_result;
+END;
+/
+
+SELECT f_first_last_upper('aLa Ma KoTa') FROM dual;
+
+--Zadanie 5--
+
+CREATE OR REPLACE FUNCTION f_pesel_to_date (
+    p_pesel IN VARCHAR2
+) RETURN VARCHAR2
+AS
+    v_year  NUMBER;
+    v_month NUMBER;
+    v_day   NUMBER;
+    v_date  DATE;
+BEGIN
+    
+    v_year  := SUBSTR(p_pesel, 1, 2);
+    v_month := SUBSTR(p_pesel, 3, 2);
+    v_day   := SUBSTR(p_pesel, 5, 2);
+
+
+    IF v_month > 40 THEN
+        v_year := 2100 + v_year;
+        v_month := v_month - 40;
+    ELSIF v_month > 20 THEN
+        v_year := 2000 + v_year;
+        v_month := v_month - 20;
+    ELSE
+        v_year := 1900 + v_year;
+    END IF;
+
+    v_date := TO_DATE(v_year || '-' || v_month || '-' || v_day, 'YYYY-MM-DD');
+
+    RETURN TO_CHAR(v_date, 'YYYY-MM-DD');
+
+EXCEPTION
+    WHEN OTHERS THEN
+        RETURN 'BŁĘDNY PESEL';
+END;
+/
+
+SELECT f_pesel_to_date('02270812345') FROM dual;
+
+--Zadanie 6--
+
+CREATE OR REPLACE FUNCTION f_country_stats (
+    p_country_name IN countries.country_name%TYPE
+) RETURN VARCHAR2
+AS
+    v_country_id countries.country_id%TYPE;
+    v_emp_count  NUMBER;
+    v_dept_count NUMBER;
+BEGIN
+
+    SELECT country_id
+    INTO v_country_id
+    FROM countries
+    WHERE country_name = p_country_name;
+
+
+    SELECT COUNT(*)
+    INTO v_dept_count
+    FROM departments d
+    JOIN locations l ON d.location_id = l.location_id
+    WHERE l.country_id = v_country_id;
+
+    SELECT COUNT(*)
+    INTO v_emp_count
+    FROM employees e
+    JOIN departments d ON e.department_id = d.department_id
+    JOIN locations   l ON d.location_id = l.location_id
+    WHERE l.country_id = v_country_id;
+
+    RETURN
+        'Pracownicy: ' || v_emp_count ||
+        ', Departamenty: ' || v_dept_count;
+
+EXCEPTION
+    WHEN NO_DATA_FOUND THEN
+        RAISE_APPLICATION_ERROR(
+            -20070,
+            'Kraj "' || p_country_name || '" nie istnieje.'
+        );
+END;
+/
+
+SELECT f_country_stats('United States of America') FROM dual;
+
+--Zadanie 7--
+
+CREATE OR REPLACE FUNCTION f_access_id (
+    p_first_name IN VARCHAR2,
+    p_last_name  IN VARCHAR2,
+    p_phone      IN VARCHAR2
+) RETURN VARCHAR2
+AS
+    v_last3 VARCHAR2(3);
+    v_last4 VARCHAR2(4);
+    v_init  VARCHAR2(1);
+BEGIN
+    v_last3 := SUBSTR(p_last_name, 1, 3);
+    v_last4 := REGEXP_SUBSTR(p_phone, '[0-9]{4}$');
+    v_init  := SUBSTR(p_first_name, 1, 1);
+
+    RETURN v_last3 || v_last4 || v_init;
+END;
+/
+
+SELECT f_access_id('Adam', 'Kowalski', '515.123.9876') FROM dual;
+
+
+
